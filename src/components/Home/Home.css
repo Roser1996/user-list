@@ -1,0 +1,26 @@
+.home {
+  width: 60%;
+  margin: auto;
+}
+
+.header {
+  text-align: center;
+}
+
+.text {
+  text-align: center;
+  margin: auto;
+}
+
+.table {
+  margin-top: 1%;
+  width: 100%;
+}
+
+.create {
+  margin-top: 2%;
+}
+
+.link {
+  text-decoration: none;
+}

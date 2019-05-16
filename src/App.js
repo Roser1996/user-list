@@ -1,26 +1,43 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { Component } from 'react';
 import './App.css';
+import { BrowserRouter, Switch, Route, Link } from 'react-router-dom';
+import Home from './components/Home/Home';
+import CreateUser from './components/CreateUser/CreateUser';
+import EditUser from './components/EditUser/EditUser';
+import AppBar from '@material-ui/core/AppBar';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+const style = {
+  tabs: {
+    color: '#fff',
+  },
+};
+
+class App extends Component {
+  render() {
+    return (
+      <div>
+        <BrowserRouter>
+          <AppBar position="static">
+            <Tabs>
+              <Link to="/" className="link">
+                <Tab 
+                  label="Home" 
+                  style={style.tabs}
+                />
+              </Link>
+            </Tabs>
+          </AppBar>
+          <Switch>
+            <Route exact path="/" component={Home} />
+            <Route exact path="/create" component={CreateUser} />
+            <Route exact path="/edit" component={EditUser} />
+          </Switch>
+        </BrowserRouter>
+      </div>
+    );
+  }
 }
 
 export default App;
