@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getUsersAction } from '../../redux/actions/getUsers';
 
 const createUserRequest = () => {
   return {
@@ -20,7 +19,7 @@ const createUserFail = (err) => {
   };
 };
 
-export const createUserAction = (userInfo) => {
+export const createUserAction = (userInfo, callback) => {
   return (dispatch) => {
     dispatch(createUserRequest());
     axios.post("http://localhost:3010/app/insert", {
@@ -32,7 +31,7 @@ export const createUserAction = (userInfo) => {
     })
     .then(res => {
       dispatch(createUserSuccess());
-      dispatch(getUsersAction());
+      callback();
     })
     .catch(err => {
       dispatch(createUserFail(err));

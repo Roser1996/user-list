@@ -7,6 +7,7 @@ import EditUser from './components/EditUser/EditUser';
 import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
+import Particles from 'react-particles-js';
 
 const style = {
   tabs: {
@@ -14,10 +15,30 @@ const style = {
   },
 };
 
+const params = {
+  "particles": {
+    "number": {
+      "value": 100
+    },
+    "size": {
+      "value": 3
+    }
+  },
+  "interactivity": {
+    "events": {
+      "onhover": {
+          "enable": true,
+          "mode": "repulse"
+      }
+    }
+  }
+}
+
 class App extends Component {
   render() {
     return (
       <div>
+        <Particles className="particles" params={params} />
         <BrowserRouter>
           <AppBar position="static">
             <Tabs>

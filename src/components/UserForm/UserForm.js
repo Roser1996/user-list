@@ -9,6 +9,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import Button from '@material-ui/core/Button';
+import Modal from '@material-ui/core/Modal';
+import Typography from '@material-ui/core/Typography';
 
 import { connect } from 'react-redux';
 import { createUserAction } from '../../redux/actions/createUser';
@@ -16,6 +18,7 @@ import { editUserAction } from '../../redux/actions/editUser';
 
 const style = {
   button: {
+    margin: "auto",
     marginTop: "1%",
     width: '10%',
     backgroundColor: '#2ed573',
@@ -30,6 +33,13 @@ const style = {
   textField: {
     width: 220,
     textAlign: 'left'
+  },
+  modalStyle: {
+    margin: "auto", 
+    marginTop: "20%",
+    position: "absolute",
+    boxShadow: "5px",
+    width: "20%",
   }
 }
 
@@ -39,11 +49,11 @@ class UserForm extends Component {
     super(props);
     this.state = {
       pageAction: "",
-      id: null,
+      id: Number(null),
       firstName: "",
       lastName: "",
       gender: "",
-      age: null,
+      age: Number(null),
       password: "",
       rePassword: "",
       showPassword: false,
@@ -54,6 +64,11 @@ class UserForm extends Component {
       ageError: false,
       passwordError: false,
       rePasswordError: false,
+      modalOpen: false,
+      modalMessage: "",
+      modalHeadertext: "Sorry",
+      modalBtnText: "Try Again",
+      modalBtnColor: "#d63031"
     }
   }
 
@@ -64,6 +79,17 @@ class UserForm extends Component {
     else {
       this.setState({ pageAction: "edit" });
       this.setState({ id: this.props.id});
+      this.props.userList.data.forEach(user => {
+        if (parseInt(user.id) === parseInt(this.props.id)) {
+          console.log("hello");
+          this.setState({ firstName: user.firstName });
+          this.setState({ lastName: user.lastName });
+          this.setState({ gender: user.gender });
+          this.setState({ age: user.age });
+          this.setState({ password: user.password });
+          this.setState({ rePassword: user.password });
+        }
+      })
     }
   }
 
@@ -135,10 +161,8 @@ class UserForm extends Component {
     
   }
 
-  handleClick = () => {
+  getTextFieldCondition = () => {
     const {
-      pageAction,
-      id,
       firstName,
       lastName,
       gender,
@@ -151,14 +175,34 @@ class UserForm extends Component {
       passwordError,
       rePasswordError
     } = this.state;
-    if (password === rePassword && 
-        !firstNameError &&
-        !lastNameError &&
-        gender !== "" &&
-        !ageError &&
-        !passwordError &&
-        !rePasswordError) {
-          let user = {
+    return (
+      firstName !== "" &&
+      lastName !== "" &&
+      gender !== "" &&
+      age !== Number(null) &&
+      password !== "" &&
+      rePassword !== "" &&
+      password === rePassword && 
+      !firstNameError &&
+      !lastNameError &&
+      !ageError &&
+      !passwordError &&
+      !rePasswordError
+    );
+  }
+
+  handleClick = () => {
+    const {
+      pageAction,
+      id,
+      firstName,
+      lastName,
+      gender,
+      age,
+      password,
+    } = this.state;
+    if (this.getTextFieldCondition()) {
+          let userInfo = {
             id: id,
             firstName: firstName,
             lastName: lastName,
@@ -167,20 +211,42 @@ class UserForm extends Component {
             password: password
           };
           if (pageAction === "create") {
-            this.props.createUser(user, () => {
-              this.props.history.push('/');
+            this.props.createUser(userInfo, () => {
+              const { err } = this.props.createState;
+              this.setState({ modalOpen: true });
+              this.setState({ modalMessage: err ? "Something went wrong, creating user failed!" : "You successfully created a new user"});
+              this.setState({ modalHeadertext: err ? "Sorry" : "Congratulations"});
+              this.setState({ modalBtnText: err ? "Try Again" : "Go Back"});
+              this.setState({ modalBtnColor: err ? "#d63031" : "#2ed573" });
             });
           }
           else {
-            this.props.editUser(user, () => {
-              this.props.history.push('/');
-              console.log("Finish");
+            this.props.editUser(userInfo, () => {
+              const { err } = this.props.editState;
+              this.setState({ modalOpen: true});
+              this.setState({ modalMessage: err ? "Something went wrong, editing user failed!" : "You successfully edited the user information"});
+              this.setState({ modalHeadertext: err ? "Sorry" : "Congratulations"});
+              this.setState({ modalBtnText: err ? "Try Again" : "Go Back" });
+              this.setState({ modalBtnColor: err ? "#d63031" : "#2ed573" });
             });
           }
         }
     else {
-      alert("Incorrect input format, please try again!");
+      this.setState({ modalOpen: true });
+      this.setState({ modalMessage: "Incorrect input format, please check again and type in the correct information!"});
+      this.setState({ modalHeadertext: "Sorry"});
+      this.setState({ modalBtnText: "Try Again"});
+      this.setState({ modalBtnColor: "#d63031"});
     }
+  }
+
+  redirectWithPath = (path) => {
+    this.props.history.push(path);
+  }
+
+  handleModalBtnClick = (path) => {
+    this.setState({ modalOpen: false });
+    this.redirectWithPath(path);
   }
 
   render() {
@@ -199,15 +265,22 @@ class UserForm extends Component {
       genderArray,
       ageError,
       passwordError,
-      rePasswordError
+      rePasswordError,
+      modalOpen,
+      modalMessage,
+      modalHeadertext,
+      modalBtnText,
+      modalBtnColor
     } = this.state;
     const { buttonText } = this.props;
+    const path = this.getTextFieldCondition() ? '/' : this.props.history.location.pathname;
 
     return (
       <div>
         <FormControl>
           <TextField 
             style={style.textField}
+            autoFocus={true}
             label="First Name"
             placeholder="First Name"
             margin="normal"
@@ -350,6 +423,28 @@ class UserForm extends Component {
             <div style={style.userText}>{buttonText}</div>
           </Button>
         </div>
+        <Modal
+          aria-labelledby="simple-modal-title"
+          aria-describedby="simple-modal-description"
+          open={modalOpen}
+          style={style.modalStyle}
+        >
+          <div className="modalDiv">
+            <Typography variant="h5" id="modal-title" style={{ color: modalBtnColor}}>
+              {modalHeadertext}
+            </Typography>
+            <Typography variant="subtitle1" id="simple-modal-description">
+              {modalMessage}
+            </Typography>
+            <Button 
+              style={{ background: modalBtnColor}}
+              id="modalBtn"
+              variant="contained" 
+              onClick={() => this.handleModalBtnClick(path)}>
+              <div>{modalBtnText}</div>
+            </Button>
+          </div>
+        </Modal>
       </div>
     )
   }
@@ -357,20 +452,19 @@ class UserForm extends Component {
 
 const mapStateToProps = state => {
   return {
+    userList: state.getUser,
     createState: state.createUser,
-    editState: state.editUser
+    editState: state.editUser,
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
     createUser: (userInfo, callback) => {
-      dispatch(createUserAction(userInfo));
-      callback();
+      dispatch(createUserAction(userInfo, callback));
     },
     editUser: (userInfo, callback) => {
       dispatch(editUserAction(userInfo, callback));
-      // callback();
     }
   }
 }

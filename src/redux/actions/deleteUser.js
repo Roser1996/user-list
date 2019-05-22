@@ -21,13 +21,13 @@ const deleteUserFail = (err) => {
   };
 };
 
-export const deleteUserAction = (userId) => {
+export const deleteUserAction = (userId, callback) => {
   return (dispatch) => {
     dispatch(deleteUserRequest());
     axios.delete(`http://localhost:3010/app/delete/${userId}`)
       .then(res => {
         dispatch(deleteUserSuccess(userId));
-        dispatch(getUsersAction());
+        dispatch(getUsersAction(callback));
       })
       .catch(err => {
         dispatch(deleteUserFail(err));

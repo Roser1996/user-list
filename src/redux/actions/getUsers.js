@@ -20,12 +20,13 @@ const getUserFail = (err) => {
   };
 };
 
-export const getUsersAction = () => {
+export const getUsersAction = (callback) => {
   return (dispatch) => {
     dispatch(getUserRequest());
     axios.get("http://localhost:3010/app/all")
       .then(res => {
         dispatch(getUserSuccess(res.data));
+        callback();
       })
       .catch(err => {
         dispatch(getUserFail(err));

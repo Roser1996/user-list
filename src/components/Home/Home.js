@@ -11,6 +11,9 @@ import TableRow from '@material-ui/core/TableRow';
 import TableFooter from '@material-ui/core/TableFooter';
 import TablePagination from '@material-ui/core/TablePagination';
 import Button from '@material-ui/core/Button';
+import Tooltip from '@material-ui/core/Tooltip';
+import TableSortLabel from '@material-ui/core/TableSortLabel';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { connect } from 'react-redux';
 import { getUsersAction } from '../../redux/actions/getUsers';
@@ -38,7 +41,35 @@ const style = {
   },
   userText: {
     marginLeft: '5%'
+  },
+  progressBar: {
+    margin: "auto",
+    marginLeft: "50%"
   }
+}
+
+function desc(a, b, orderBy) {
+  if (b[orderBy] < a[orderBy]) {
+    return -1;
+  }
+  if (b[orderBy] > a[orderBy]) {
+    return 1;
+  }
+  return 0;
+}
+
+function stableSort(array, cmp) {
+  const stabilizedThis = array.map((el, index) => [el, index]);
+  stabilizedThis.sort((a, b) => {
+    const order = cmp(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  });
+  return stabilizedThis.map(el => el[0]);
+}
+
+function getSorting(order, orderBy) {
+  return order === 'desc' ? (a, b) => desc(a, b, orderBy) : (a, b) => -desc(a, b, orderBy);
 }
 
 class Home extends Component {
@@ -49,12 +80,23 @@ class Home extends Component {
       rowsPerPage: 5,
       page: 0,
       loading: true,
-      users: []
+      searchText: "",
+      users: [],
+      headerRows: [
+        { id: "firstName", numeric: false, disablePadding: true, label: "First Name"},
+        { id: "lastName", numeric: false, disablePadding: true, label: "Last Name"},
+        { id: "gender", numeric: false, disablePadding: true, label: "Gender"},
+        { id: "age", numeric: true, disablePadding: false, label: "Age"},
+      ],
+      order: "asc",
+      orderBy: "firstName"
     }
   }
 
   componentDidMount() {
-    this.props.getUserList();
+    this.props.getUserList(() => {
+      this.setState({ users: this.props.userList.data});
+    });
   }
 
   handleChangePage = (event, page) => {
@@ -67,48 +109,95 @@ class Home extends Component {
   }
 
   handleDeleteBtn = userId => {
-    this.props.deleteUserById(userId);
+    this.props.deleteUserById(userId, () => {
+      this.setState({ users: this.props.userList.data });
+    });
   }
 
-  // componentWillUpdate() {
-  //   this.setState({users: this.props.userList.data});
-  // }
+  handleChangeSearchField = event => {
+    const { data } = this.props.userList
+    let str = event.target.value;
+    this.setState({ searchText: event.target.value });
+    this.setState({ users: data.filter(elem => {
+      return elem.firstName.toUpperCase().includes(str.toUpperCase()) || 
+        elem.lastName.toUpperCase().includes(str.toUpperCase());
+    })});
+  }
+
+  handleSortRequest = (rowId) => {
+    const orderBy = rowId;
+    let order = 'desc';
+
+    if (this.state.orderBy === rowId && this.state.order === 'desc') {
+      order = 'asc';
+    }
+
+    this.setState({ order, orderBy });
+  }
 
   render() {
-    const { rowsPerPage, page } = this.state;
+    const { rowsPerPage, page, searchText, users, headerRows, order, orderBy } = this.state;
     const { userList } = this.props;
-    const emptyRows = rowsPerPage - Math.min(rowsPerPage, userList.data.length - page * rowsPerPage);
+    const emptyRows = rowsPerPage - Math.min(rowsPerPage, users.length - page * rowsPerPage);
 
     return (
       <div className="home">
         <h1 className="header">Users</h1>
         <div className="text">
           <TextField 
-            label='Search'
             style={style.textField}
+            autoFocus={true}
+            label='Search'
             placeholder='Type a name'
             variant='outlined'
+            value={searchText}
+            onChange={this.handleChangeSearchField}
           />
         </div>
         <div className="table">
           <Paper style={style.paper}>
             {
-              userList.isGetLoading ? <div>loading...</div> : 
+              userList.isLoading ?
+              <div className="progress">
+                <CircularProgress style={style.progressBar} />
+              </div> : 
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell style={style.tableHeader} align="center">First Name</TableCell>
-                    <TableCell style={style.tableHeader} align="center">Last Name</TableCell>
-                    <TableCell style={style.tableHeader} align="center">Gender</TableCell>
-                    <TableCell style={style.tableHeader} align="center">Age</TableCell>
+                    {
+                      headerRows.map(row => (
+                        <TableCell
+                          style={style.tableHeader}
+                          key={row.id}
+                          align="center"
+                          padding={row.disablePadding ? "none": "default" }
+                          sortDirection={orderBy === row.id ? order: false}
+                        >
+                          <Tooltip
+                            title="Sort"
+                            placement={row.numeric ? "bottom-end": "bottom-start"}
+                            enterDelay={300}
+                          >
+                            <TableSortLabel 
+                              active={orderBy === row.id}
+                              direction={order}
+                              onClick={() => this.handleSortRequest(row.id)}
+                            >
+                              {row.label}
+                            </TableSortLabel>
+                          </Tooltip>
+                        </TableCell>
+                      ))
+                    }
                     <TableCell style={style.tableHeader} align="center">Edit</TableCell>
                     <TableCell style={style.tableHeader} align="center">Delete</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {
-                    userList.data.slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((elem, index) => (
-                      <TableRow key={elem.id}>
+                    stableSort(users, getSorting(order, orderBy))
+                    .slice(page * rowsPerPage, (page + 1) * rowsPerPage).map((elem, index) => (
+                      <TableRow key={elem.id} hover>
                         <TableCell align="center">{elem.firstName}</TableCell>
                         <TableCell align="center">{elem.lastName}</TableCell>
                         <TableCell align="center">{elem.gender}</TableCell>
@@ -140,7 +229,7 @@ class Home extends Component {
                   <TableRow>
                     <TablePagination 
                       rowsPerPageOptions={[5, 10, 25]}
-                      count={userList.data.length}
+                      count={users.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       SelectProps={{
@@ -163,9 +252,6 @@ class Home extends Component {
             </Button>
           </Link>
         </div>
-        <div>
-          {this.state.loading && <div>loading...</div>}
-        </div>
       </div>
     )
   }
@@ -179,11 +265,11 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    getUserList: () => {
-      dispatch(getUsersAction());
+    getUserList: (callback) => {
+      dispatch(getUsersAction(callback));
     },
-    deleteUserById: (id) => {
-      dispatch(deleteUserAction(id));
+    deleteUserById: (id, callback) => {
+      dispatch(deleteUserAction(id, callback));
     }
   };
 };

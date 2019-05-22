@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getUsersAction } from '../../redux/actions/getUsers';
 
 const editUserRequest = () => {
   return {
@@ -33,7 +32,6 @@ export const editUserAction = (userInfo, callback) => {
     })
     .then(res => {
       dispatch(editUserSuccess());
-      dispatch(getUsersAction());
       callback();
     })
     .catch(err => {

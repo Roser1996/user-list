@@ -1,0 +1,27 @@
+.modalDiv {
+  width: 100%;
+  height: 180px;
+  outline: none;
+  background: #f1f2f6;
+  border: 5px solid #2d3436;
+  border-radius: 20px;
+  /* background-clip: padding-box; */
+}
+
+#modalBtn {
+  margin-top: 10px;
+  margin-left: 35%;
+  text-align: center;
+  color: #fff;
+}
+
+#modal-title {
+  text-align: center;
+  padding-top: 5%;
+}
+
+#simple-modal-description {
+  text-align: center;
+  margin-left: 5%;
+  margin-right: 5%;
+}
